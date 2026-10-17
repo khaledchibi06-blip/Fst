@@ -10,6 +10,8 @@ module.exports = {
     address: 'تيارت، بجانب سكوتيار',
     mapsQuery: 'EURL Fast Gaz Tiaret', // ما يُبحث عنه في خرائط Google
     email: 'Fastgaztiaret@gmail.com',
+    // روابط مواقع التواصل — اترك الرابط فارغاً لإخفائه
+    tiktok: 'https://www.tiktok.com/search/user?q=eurl%20fast%20gaz', // ضع هنا رابط صفحتك المباشر مثل https://www.tiktok.com/@اسم_الحساب
     facebook: '',
     instagram: '',
   },

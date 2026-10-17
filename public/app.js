@@ -67,6 +67,11 @@
     all('[data-address]', (n) => { n.textContent = w.address; });
     all('[data-city]', (n) => { n.textContent = w.city; });
     all('[data-email]', (n) => { n.textContent = w.email; });
+    for (const net of ['tiktok', 'facebook', 'instagram']) {
+      all(`[data-social=${net}]`, (a) => {
+        if (w[net]) { a.href = w[net]; a.classList.remove('hidden'); } else a.classList.add('hidden');
+      });
+    }
     all('[data-email-link]', (a) => { a.href = 'mailto:' + w.email; });
     all('[data-hours]', (n) => { n.textContent = state.config.hoursText; });
     const q = encodeURIComponent(w.mapsQuery || w.address);

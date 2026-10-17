@@ -48,6 +48,7 @@
     <symbol id="i-cog" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
     <symbol id="i-tank" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="8" width="20" height="12" rx="6"/><path d="M10 8V5h4v3M7 14h10"/></symbol>
     <symbol id="i-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></symbol>
+    <symbol id="i-tiktok" viewBox="0 0 24 24" fill="currentColor"><path d="M16.6 5.8A4.3 4.3 0 0 1 15.5 3h-3.1v12.4a2.6 2.6 0 1 1-2.6-2.6c.3 0 .5 0 .8.1V9.7a5.8 5.8 0 1 0 4.9 5.7V9.1a7.4 7.4 0 0 0 4.3 1.4V7.4a4.3 4.3 0 0 1-3.2-1.6z"/></symbol>
     <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
     <symbol id="i-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></symbol>
     <symbol id="i-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
@@ -344,6 +345,7 @@
         <div class="card contact-item"><div class="i"><svg><use href="#i-phone"/></svg></div><div><h3>الهاتف</h3><a href="#" class="big" data-phone-link><span data-phone></span></a></div></div>
         <div class="card contact-item"><div class="i"><svg><use href="#i-pin"/></svg></div><div><h3>العنوان</h3><p data-address></p><a href="#" data-maps target="_blank" rel="noopener" style="color:var(--blue);font-weight:700">افتح في خرائط Google ←</a></div></div>
         <div class="card contact-item"><div class="i"><svg><use href="#i-mail"/></svg></div><div><h3>البريد الإلكتروني</h3><a href="#" data-email-link style="color:var(--blue);font-weight:700;word-break:break-all"><span data-email></span></a></div></div>
+        <a href="#" class="card contact-item hidden" data-social="tiktok" target="_blank" rel="noopener"><div class="i tiktok"><svg><use href="#i-tiktok"/></svg></div><div><h3>تابعونا على TikTok</h3><p>شاهدوا أعمالنا: EURL Fast Gaz</p></div></a>
         <div class="card contact-item"><div class="i"><svg><use href="#i-clock"/></svg></div><div><h3>أوقات العمل</h3><p data-hours></p></div></div>
       </div>
       <div class="map"><iframe id="mapFrame" title="موقع الورشة على الخريطة" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe></div>
@@ -390,6 +392,9 @@
           <li><svg class="ico"><use href="#i-mail"/></svg><a href="#" data-email-link><span data-email></span></a></li>
           <li><svg class="ico"><use href="#i-pin"/></svg><span data-address></span></li>
         </ul>
+        <div class="socials">
+          <a href="#" class="hidden" data-social="tiktok" target="_blank" rel="noopener" aria-label="TikTok"><svg class="ico"><use href="#i-tiktok"/></svg>TikTok</a>
+        </div>
       </div>
     </div>
     <div class="bottom">© <span id="year"></span> EURL Fast Gaz — فاست غاز. جميع الحقوق محفوظة.</div>

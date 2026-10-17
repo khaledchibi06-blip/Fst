@@ -459,3 +459,10 @@ footer.site .bottom { border-top: 1px solid rgba(255,255,255,.08); padding: 20px
 
 /* أرقام الهاتف تبقى من اليسار لليمين داخل النص العربي */
 [data-phone] { direction: ltr; unicode-bidi: isolate; }
+
+/* مواقع التواصل */
+.socials { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+.socials a { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 10px; background: rgba(255,255,255,.08); color: #fff; font-weight: 700; }
+.socials a:hover { background: rgba(255,255,255,.16); }
+.contact-item .i.tiktok { background: #111; color: #fff; }
+a.contact-item:hover { border-color: #cfdcf3; box-shadow: var(--shadow-lg); }
