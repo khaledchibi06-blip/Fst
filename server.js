@@ -283,9 +283,10 @@ async function handleApi(req, res, url) {
     || req.socket.remoteAddress || '';
 
   if (req.method === 'GET' && p === '/api/config') {
-    const { workshop, services, slots, hoursText, workDays, maxDaysAhead } = config;
+    const { workshop, services, slots, hoursText, workDays, maxDaysAhead, fuelPrices } = config;
     return send(res, 200, {
-      workshop, services, slots, hoursText, workDays, maxDaysAhead, holidays: closedDays(), today: todayInTz(),
+      workshop, services, slots, hoursText, workDays, maxDaysAhead, fuelPrices,
+      holidays: closedDays(), today: todayInTz(),
     });
   }
 

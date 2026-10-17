@@ -5,7 +5,16 @@
   const DAY_NAMES = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
   const MONTHS = ['جانفي', 'فيفري', 'مارس', 'أفريل', 'ماي', 'جوان', 'جويلية', 'أوت', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
   const STATUS = { pending: 'في انتظار التأكيد', confirmed: 'مؤكد', done: 'منجز', cancelled: 'ملغى' };
-  const ICONS = { injection: '⚙️', carburetor: '🔩', maintenance: '🛠️', tank: '🛢️' };
+  const ICONS = { injection: 'cpu', carburetor: 'cog', maintenance: 'wrench', tank: 'tank' };
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+  const icon = (name, cls) => {
+    const svg = document.createElementNS(SVG_NS, 'svg');
+    if (cls) svg.setAttribute('class', cls);
+    const use = document.createElementNS(SVG_NS, 'use');
+    use.setAttribute('href', '#i-' + name);
+    svg.append(use);
+    return svg;
+  };
 
   const state = { config: null, service: null, date: null, time: null };
 
@@ -51,32 +60,45 @@
 
   function fillContact() {
     const w = state.config.workshop;
-    document.querySelectorAll('[data-wa]').forEach((a) => { a.href = waLink('السلام عليكم، أريد الاستفسار عن تركيب السيرغاز'); a.target = '_blank'; });
-    document.querySelectorAll('[data-phone]').forEach((a) => { a.textContent = w.phone; a.href = 'tel:' + w.phone.replace(/\s/g, ''); });
-    document.querySelectorAll('[data-address]').forEach((p) => { p.textContent = w.address; });
-    document.querySelectorAll('[data-maps]').forEach((a) => { a.href = w.mapsUrl; });
-    document.querySelectorAll('[data-hours]').forEach((p) => { p.textContent = state.config.hoursText; });
+    const all = (sel, fn) => document.querySelectorAll(sel).forEach(fn);
+    all('[data-wa]', (a) => { a.href = waLink('السلام عليكم، أريد الاستفسار عن تركيب السيرغاز'); a.target = '_blank'; a.rel = 'noopener'; });
+    all('[data-phone]', (n) => { n.textContent = w.phone; });
+    all('[data-phone-link]', (a) => { a.href = 'tel:' + w.phone.replace(/\s/g, ''); });
+    all('[data-address]', (n) => { n.textContent = w.address; });
+    all('[data-city]', (n) => { n.textContent = w.city; });
+    all('[data-hours]', (n) => { n.textContent = state.config.hoursText; });
+    const q = encodeURIComponent(w.mapsQuery || w.address);
+    all('[data-maps]', (a) => { a.href = 'https://www.google.com/maps/search/?api=1&query=' + q; });
+    const frame = $('#mapFrame');
+    if (frame) frame.src = `https://maps.google.com/maps?q=${q}&z=15&output=embed`;
   }
 
   function renderServices() {
     const grid = $('#servicesGrid');
     const picker = $('#servicePicker');
     for (const s of state.config.services) {
-      grid.append(el('div', { class: 'card service' }, [
-        el('div', { class: 'icon', text: ICONS[s.id] || '🔧' }),
+      grid.append(el('div', { class: 'card service reveal' }, [
+        el('div', { class: 'icon' }, icon(ICONS[s.id] || 'wrench')),
         el('h3', { text: s.title }),
         el('p', { text: s.desc }),
         el('div', { class: 'meta' }, [
-          el('span', { text: '⏱ ' + s.duration }),
+          el('span', {}, [icon('clock', 'ico'), s.duration]),
           el('b', { text: s.price }),
         ]),
+        el('a', {
+          class: 'go', href: '#booking',
+          onclick: () => { const r = $('#svc-' + s.id); r.checked = true; state.service = s.id; updateSummary(); },
+        }, ['احجز هذه الخدمة', icon('arrow', 'ico')]),
       ]));
       picker.append(el('div', { class: 'choice' }, [
         el('input', {
           type: 'radio', name: 'service', id: 'svc-' + s.id, value: s.id,
           onchange: () => { state.service = s.id; updateSummary(); },
         }),
-        el('label', { for: 'svc-' + s.id }, [el('b', { text: s.title }), el('small', { text: s.duration })]),
+        el('label', { for: 'svc-' + s.id }, [
+          el('span', { class: 'ci' }, icon(ICONS[s.id] || 'wrench')),
+          el('span', {}, [el('b', { text: s.title }), el('small', { text: s.duration })]),
+        ]),
       ]));
     }
   }
@@ -237,12 +259,71 @@
     }
   });
 
+  // ---------- أقرب موعد متاح ----------
+  async function findNextSlot() {
+    const box = $('#nextSlot');
+    const { today, maxDaysAhead, workDays, holidays } = state.config;
+    for (let i = 0; i <= Math.min(maxDaysAhead, 14); i++) {
+      const date = addDays(today, i);
+      if (!workDays.includes(weekday(date)) || holidays.includes(date)) continue;
+      try {
+        const { slots } = await api('/api/slots?date=' + date);
+        const free = slots.filter((s) => s.available);
+        if (!free.length) continue;
+        box.replaceChildren(
+          el('small', { text: i === 0 ? 'اليوم' : i === 1 ? 'غداً' : 'قريباً' }),
+          el('b', { text: formatDate(date) }),
+          el('div', { class: 'times-mini' }, free.map((s) => el('span', { text: s.time }))),
+        );
+        return;
+      } catch { break; }
+    }
+    box.replaceChildren(el('small', { text: 'اتصل بنا لمعرفة أقرب موعد' }));
+  }
+
+  // ---------- حاسبة التوفير ----------
+  function setupCalc() {
+    const km = $('#km'), cons = $('#cons'), pP = $('#pPetrol'), pL = $('#pLpg');
+    if (!km) return;
+    pP.value = state.config.fuelPrices.petrol;
+    pL.value = state.config.fuelPrices.lpg;
+    const fmt = (n) => Math.round(n).toLocaleString('en-US') + ' دج';
+    const calc = () => {
+      const liters = (Number(km.value) * Number(cons.value)) / 100;
+      const petrol = liters * (Number(pP.value) || 0);
+      const lpg = liters * 1.2 * (Number(pL.value) || 0);
+      const save = Math.max(0, petrol - lpg);
+      $('#kmOut').textContent = Number(km.value).toLocaleString('en-US') + ' كم';
+      $('#consOut').textContent = cons.value + ' ل';
+      $('#costPetrol').textContent = fmt(petrol);
+      $('#costLpg').textContent = fmt(lpg);
+      $('#saveMonth').textContent = fmt(save);
+      $('#saveYear').textContent = 'أي حوالي ' + fmt(save * 12) + ' في السنة';
+    };
+    [km, cons, pP, pL].forEach((i) => i.addEventListener('input', calc));
+    calc();
+  }
+
+  // ---------- ظهور تدريجي للأقسام ----------
+  function setupReveal() {
+    const els = document.querySelectorAll('.reveal:not(.in)');
+    if (!('IntersectionObserver' in window)) { els.forEach((e) => e.classList.add('in')); return; }
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+    }, { threshold: 0.12 });
+    els.forEach((e) => io.observe(e));
+  }
+
   // ---------- بدء التشغيل ----------
+  setupReveal();
   api('/api/config').then((cfg) => {
     state.config = cfg;
     fillContact();
     renderServices();
     renderDays();
+    setupCalc();
+    setupReveal();
+    findNextSlot();
   }).catch(() => {
     $('#servicesGrid').append(el('div', { class: 'alert err', text: 'تعذر تحميل المعلومات، أعد تحميل الصفحة.' }));
   });
