@@ -7,6 +7,9 @@
   const FUEL = { injection: 'حقن', carburetor: 'كاربيراتور' };
   let services = [];
   let today = '';
+  let lastId = null;
+  let unseen = 0;
+  const baseTitle = document.title;
 
   const api = async (url, opts = {}) => {
     const res = await fetch(url, { ...opts, headers: { 'Content-Type': 'application/json' } });
@@ -94,6 +97,7 @@
     $('#stPending').textContent = data.stats.pending || 0;
     $('#stUpcoming').textContent = data.stats.upcoming || 0;
     $('#stDone').textContent = data.stats.done || 0;
+    notifyNew(data.stats.lastId || 0);
     render(data.bookings);
   }
 
@@ -151,6 +155,106 @@
       ]));
     }
   }
+
+  // ---------- تنبيه عند وصول حجز جديد ----------
+  function beep() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      [0, 0.25].forEach((t) => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.frequency.value = 880;
+        g.gain.setValueAtTime(0.2, ctx.currentTime + t);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.2);
+        o.connect(g).connect(ctx.destination);
+        o.start(ctx.currentTime + t);
+        o.stop(ctx.currentTime + t + 0.2);
+      });
+    } catch { /* المتصفح يمنع الصوت قبل أي تفاعل */ }
+  }
+
+  function notifyNew(id) {
+    if (lastId !== null && id > lastId) {
+      unseen += id - lastId;
+      document.title = `(${unseen}) حجز جديد — ${baseTitle}`;
+      beep();
+    }
+    lastId = id;
+  }
+  const clearUnseen = () => { unseen = 0; document.title = baseTitle; };
+  window.addEventListener('focus', clearUnseen);
+  document.addEventListener('click', clearUnseen);
+
+  // ---------- النوافذ ----------
+  document.querySelectorAll('dialog [data-close]').forEach((b) => b.addEventListener('click', () => b.closest('dialog').close()));
+
+  let slots = [];
+  fetch('/api/config').then((r) => r.json()).then((cfg) => {
+    slots = cfg.slots;
+    $('#addService').replaceChildren(...cfg.services.map((s) => el('option', { value: s.id, text: s.title })));
+    $('#addTime').replaceChildren(...slots.map((t) => el('option', { value: t, text: t })));
+  }).catch(() => {});
+
+  const addForm = $('#addForm');
+  $('#addBtn').addEventListener('click', () => {
+    addForm.reset();
+    addForm.date.value = today;
+    $('#addErr').classList.add('hidden');
+    $('#addDialog').showModal();
+  });
+  addForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const body = Object.fromEntries(new FormData(addForm));
+    body.force = addForm.force.checked;
+    body.status = 'confirmed';
+    try {
+      const { ref } = await api('/api/admin/bookings', { method: 'POST', body: JSON.stringify(body) });
+      $('#addDialog').close();
+      await load();
+      alert('تم الحجز. رقم الحجز: ' + ref);
+    } catch (ex) {
+      $('#addErr').textContent = ex.message + (ex.message.includes('متاح') ? ' — يمكنك تفعيل "تجاوز عدد الأماكن".' : '');
+      $('#addErr').classList.remove('hidden');
+    }
+  });
+
+  async function loadClosed() {
+    const { closed, holidays } = await api('/api/admin/closed');
+    const list = $('#closedList');
+    list.innerHTML = '';
+    for (const d of holidays.filter((h) => h >= today)) {
+      list.append(el('li', {}, [el('span', {}, [dayLabel(d), el('small', { text: ' — من ملف الإعدادات' })])]));
+    }
+    for (const c of closed) {
+      list.append(el('li', {}, [
+        el('span', {}, [dayLabel(c.date), c.reason ? el('small', { text: ' — ' + c.reason }) : null]),
+        el('button', {
+          class: 'btn btn-outline btn-sm', type: 'button', text: 'فتح اليوم',
+          onclick: async () => { await api('/api/admin/closed/' + c.date, { method: 'DELETE' }); loadClosed(); },
+        }),
+      ]));
+    }
+    if (!list.children.length) list.append(el('li', { text: 'لا توجد أيام مغلقة قادمة' }));
+  }
+  $('#closedBtn').addEventListener('click', () => {
+    $('#closedMsg').classList.add('hidden');
+    $('#closedDialog').showModal();
+    loadClosed();
+  });
+  $('#closedForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const f = e.target;
+    try {
+      const r = await api('/api/admin/closed', { method: 'POST', body: JSON.stringify({ date: f.date.value, reason: f.reason.value }) });
+      const msg = $('#closedMsg');
+      msg.textContent = r.activeBookings
+        ? `تم إغلاق اليوم. تنبيه: يوجد ${r.activeBookings} حجز في هذا اليوم، اتصل بالزبائن لتغيير الموعد.`
+        : 'تم إغلاق اليوم.';
+      msg.className = 'alert ' + (r.activeBookings ? 'err' : 'ok');
+      f.reset();
+      loadClosed();
+    } catch (ex) { alert(ex.message); }
+  });
 
   // محاولة الدخول بالجلسة الحالية
   api('/api/admin/bookings?from=9999-01-01').then((d) => {

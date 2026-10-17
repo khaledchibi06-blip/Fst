@@ -38,6 +38,10 @@ db.exec(`
     created_at  TEXT NOT NULL DEFAULT (datetime('now'))
   );
   CREATE INDEX IF NOT EXISTS idx_bookings_date ON bookings(date, time);
+  CREATE TABLE IF NOT EXISTS closed_days (
+    date   TEXT PRIMARY KEY,
+    reason TEXT
+  );
 `);
 
 const ACTIVE_STATUSES = ['pending', 'confirmed'];
@@ -67,10 +71,16 @@ function isValidDate(s) {
   return !isNaN(d) && d.toISOString().slice(0, 10) === s;
 }
 
+// العطل من config.js + الأيام المغلقة من لوحة الإدارة
+function closedDays() {
+  const fromDb = db.prepare('SELECT date FROM closed_days').all().map((r) => r.date);
+  return [...new Set([...config.holidays, ...fromDb])];
+}
+
 function dayIsOpen(dateStr) {
   const today = todayInTz();
   if (dateStr < today || dateStr > addDays(today, config.maxDaysAhead)) return false;
-  if (config.holidays.includes(dateStr)) return false;
+  if (closedDays().includes(dateStr)) return false;
   const weekday = new Date(dateStr + 'T00:00:00Z').getUTCDay();
   return config.workDays.includes(weekday);
 }
@@ -224,28 +234,31 @@ function validateBooking(b) {
   return { data, errors };
 }
 
-function createBooking(data) {
+// force: حجز من لوحة الإدارة يتجاوز التحقق من الأماكن المتاحة
+function createBooking(data, { force = false, status = 'pending' } = {}) {
   // معاملة واحدة لمنع حجز نفس المكان مرتين
   db.exec('BEGIN IMMEDIATE');
   try {
-    const slot = slotsFor(data.date).find((s) => s.time === data.time);
-    if (!slot || !slot.available) {
-      db.exec('ROLLBACK');
-      return { error: 'هذا الموعد لم يعد متاحاً، الرجاء اختيار وقت آخر' };
-    }
-    const dup = db.prepare(
-      `SELECT ref FROM bookings WHERE phone = ? AND date = ? AND status IN ('pending','confirmed')`
-    ).get(data.phone, data.date);
-    if (dup) {
-      db.exec('ROLLBACK');
-      return { error: `لديك حجز مسبق في هذا اليوم (رقم الحجز ${dup.ref})` };
+    if (!force) {
+      const slot = slotsFor(data.date).find((s) => s.time === data.time);
+      if (!slot || !slot.available) {
+        db.exec('ROLLBACK');
+        return { error: 'هذا الموعد لم يعد متاحاً، الرجاء اختيار وقت آخر' };
+      }
+      const dup = db.prepare(
+        `SELECT ref FROM bookings WHERE phone = ? AND date = ? AND status IN ('pending','confirmed')`
+      ).get(data.phone, data.date);
+      if (dup) {
+        db.exec('ROLLBACK');
+        return { error: `لديك حجز مسبق في هذا اليوم (رقم الحجز ${dup.ref})` };
+      }
     }
     const ref = genRef();
     db.prepare(`
-      INSERT INTO bookings (ref, name, phone, car_brand, car_model, car_year, fuel_system, service, date, time, notes)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO bookings (ref, name, phone, car_brand, car_model, car_year, fuel_system, service, date, time, notes, status)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(ref, data.name, data.phone, data.car_brand, data.car_model, data.car_year,
-      data.fuel_system, data.service, data.date, data.time, data.notes);
+      data.fuel_system, data.service, data.date, data.time, data.notes, status);
     db.exec('COMMIT');
     return { ref };
   } catch (e) {
@@ -270,8 +283,10 @@ async function handleApi(req, res, url) {
     || req.socket.remoteAddress || '';
 
   if (req.method === 'GET' && p === '/api/config') {
-    const { workshop, services, slots, hoursText, workDays, maxDaysAhead, holidays } = config;
-    return send(res, 200, { workshop, services, slots, hoursText, workDays, maxDaysAhead, holidays, today: todayInTz() });
+    const { workshop, services, slots, hoursText, workDays, maxDaysAhead } = config;
+    return send(res, 200, {
+      workshop, services, slots, hoursText, workDays, maxDaysAhead, holidays: closedDays(), today: todayInTz(),
+    });
   }
 
   if (req.method === 'GET' && p === '/api/slots') {
@@ -356,7 +371,8 @@ async function handleApi(req, res, url) {
           SUM(CASE WHEN date = ? AND status IN ('pending','confirmed') THEN 1 ELSE 0 END) AS today,
           SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) AS pending,
           SUM(CASE WHEN date >= ? AND status = 'confirmed' THEN 1 ELSE 0 END) AS upcoming,
-          SUM(CASE WHEN status = 'done' THEN 1 ELSE 0 END) AS done
+          SUM(CASE WHEN status = 'done' THEN 1 ELSE 0 END) AS done,
+          MAX(id) AS lastId
         FROM bookings
       `).get(today, today);
       return send(res, 200, { bookings: rows, stats, services: config.services, today });
@@ -370,6 +386,36 @@ async function handleApi(req, res, url) {
       if (!r.changes) return send(res, 404, { error: 'الحجز غير موجود' });
       return send(res, 200, { ok: true });
     }
+    if (req.method === 'POST' && p === '/api/admin/bookings') {
+      const body = await readBody(req);
+      const { data, errors } = validateBooking(body);
+      if (errors.length) return send(res, 400, { error: errors.join('، ') });
+      const status = ALL_STATUSES.includes(body.status) ? body.status : 'confirmed';
+      const result = createBooking(data, { force: !!body.force, status });
+      if (result.error) return send(res, 409, result);
+      return send(res, 201, { ref: result.ref });
+    }
+
+    if (req.method === 'GET' && p === '/api/admin/closed') {
+      const rows = db.prepare('SELECT date, reason FROM closed_days WHERE date >= ? ORDER BY date').all(todayInTz());
+      return send(res, 200, { closed: rows, holidays: config.holidays });
+    }
+    if (req.method === 'POST' && p === '/api/admin/closed') {
+      const body = await readBody(req);
+      const date = clean(body.date, 10);
+      if (!isValidDate(date)) return send(res, 400, { error: 'التاريخ غير صحيح' });
+      db.prepare('INSERT OR REPLACE INTO closed_days (date, reason) VALUES (?, ?)').run(date, clean(body.reason, 100));
+      const active = db.prepare(
+        `SELECT COUNT(*) AS n FROM bookings WHERE date = ? AND status IN ('pending','confirmed')`
+      ).get(date).n;
+      return send(res, 200, { ok: true, activeBookings: active });
+    }
+    const cm = p.match(/^\/api\/admin\/closed\/(\d{4}-\d{2}-\d{2})$/);
+    if (cm && req.method === 'DELETE') {
+      db.prepare('DELETE FROM closed_days WHERE date = ?').run(cm[1]);
+      return send(res, 200, { ok: true });
+    }
+
     if (m && req.method === 'DELETE') {
       const r = db.prepare('DELETE FROM bookings WHERE id = ?').run(Number(m[1]));
       if (!r.changes) return send(res, 404, { error: 'الحجز غير موجود' });

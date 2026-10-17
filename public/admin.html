@@ -37,6 +37,16 @@
     .icon-btn { background: none; border: 0; cursor: pointer; font-size: 1.1rem; padding: 4px 6px; }
     .empty { text-align: center; padding: 40px; color: var(--muted); }
     .day-row td { background: #eef4fd; font-weight: 800; color: var(--blue-dark); }
+    dialog { border: 0; border-radius: var(--radius); padding: 24px; width: min(640px, 100% - 32px); box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+    dialog::backdrop { background: rgba(8,47,102,.45); }
+    dialog h3 { margin: 0 0 16px; color: var(--blue-dark); }
+    dialog .row { display: flex; gap: 10px; justify-content: flex-start; margin-top: 18px; flex-wrap: wrap; }
+    .check-line { display: flex; gap: 8px; align-items: center; font-size: .9rem; margin-top: 12px; }
+    .check-line input { width: auto; }
+    .closed-list { list-style: none; padding: 0; margin: 16px 0 0; display: grid; gap: 8px; max-height: 260px; overflow-y: auto; }
+    .closed-list li { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: #f7f9fc; border-radius: 10px; }
+    .closed-list small { color: var(--muted); }
+    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
     @media (max-width: 720px) { .stats { grid-template-columns: repeat(2, 1fr); } }
     @media print {
       .topbar, .filters, .quick, .stats, td.actions, th:last-child { display: none !important; }
@@ -84,6 +94,11 @@
       <button class="btn btn-outline btn-sm" onclick="window.print()">🖨 طباعة</button>
     </div>
 
+    <div class="toolbar">
+      <button class="btn btn-primary btn-sm" id="addBtn">➕ إضافة حجز (زبون اتصل بالهاتف)</button>
+      <button class="btn btn-blue btn-sm" id="closedBtn">🚫 أيام العطل / إغلاق يوم</button>
+    </div>
+
     <form class="filters" id="filters">
       <div class="field"><label>من</label><input type="date" name="from"></div>
       <div class="field"><label>إلى</label><input type="date" name="to"></div>
@@ -111,6 +126,46 @@
     </div>
   </main>
 </div>
+
+<dialog id="addDialog">
+  <h3>إضافة حجز يدوي</h3>
+  <form id="addForm" method="dialog">
+    <div class="fields">
+      <div class="field"><label>الاسم <em>*</em></label><input name="name" required></div>
+      <div class="field"><label>الهاتف <em>*</em></label><input name="phone" type="tel" dir="ltr" style="text-align:right" required></div>
+      <div class="field"><label>نوع السيارة <em>*</em></label><input name="car_brand" required></div>
+      <div class="field"><label>الطراز <em>*</em></label><input name="car_model" required></div>
+      <div class="field"><label>سنة الصنع</label><input name="car_year" type="number" min="1970" max="2030"></div>
+      <div class="field">
+        <label>نظام المحرك</label>
+        <select name="fuel_system"><option value="">غير معروف</option><option value="injection">حقن</option><option value="carburetor">كاربيراتور</option></select>
+      </div>
+      <div class="field full"><label>الخدمة <em>*</em></label><select name="service" id="addService" required></select></div>
+      <div class="field"><label>التاريخ <em>*</em></label><input name="date" type="date" required></div>
+      <div class="field"><label>الوقت <em>*</em></label><select name="time" id="addTime" required></select></div>
+      <div class="field full"><label>ملاحظات</label><textarea name="notes"></textarea></div>
+    </div>
+    <label class="check-line"><input type="checkbox" name="force"> تجاوز عدد الأماكن (إضافة سيارة حتى لو الموعد ممتلئ)</label>
+    <div class="alert err hidden" id="addErr"></div>
+    <div class="row">
+      <button class="btn btn-primary" type="submit" value="save">حفظ الحجز</button>
+      <button class="btn btn-outline" type="button" data-close>إلغاء</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="closedDialog">
+  <h3>أيام العطل</h3>
+  <p class="hint" style="margin-top:0">الأيام المغلقة لا تظهر للزبائن في الحجز.</p>
+  <form id="closedForm" class="fields">
+    <div class="field"><label>التاريخ</label><input name="date" type="date" required></div>
+    <div class="field"><label>السبب (اختياري)</label><input name="reason" placeholder="عيد، عطلة..."></div>
+    <div class="field full"><button class="btn btn-blue" type="submit">إغلاق هذا اليوم</button></div>
+  </form>
+  <div class="alert ok hidden" id="closedMsg"></div>
+  <ul class="closed-list" id="closedList"></ul>
+  <div class="row"><button class="btn btn-outline" type="button" data-close>إغلاق</button></div>
+</dialog>
 
 <script src="admin.js"></script>
 </body>
