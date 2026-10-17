@@ -1,0 +1,13 @@
+{
+  "name": "fast-gaz",
+  "version": "1.0.0",
+  "description": "موقع ورشة فاست غاز لتركيب السيرغاز مع نظام حجز المواعيد",
+  "main": "server.js",
+  "private": true,
+  "scripts": {
+    "start": "node --no-warnings=ExperimentalWarning server.js"
+  },
+  "engines": {
+    "node": ">=22.13"
+  }
+}
