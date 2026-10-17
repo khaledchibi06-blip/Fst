@@ -22,6 +22,7 @@
     "name": "EURL Fast Gaz - فاست غاز",
     "legalName": "EURL Fast Gaz",
     "telephone": "+213775879228",
+    "email": "Fastgaztiaret@gmail.com",
     "address": { "@type": "PostalAddress", "streetAddress": "بجانب سكوتيار", "addressLocality": "Tiaret", "addressCountry": "DZ" },
     "openingHours": "Sa-Th 08:00-17:00"
   }
@@ -46,6 +47,7 @@
     <symbol id="i-cpu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M15 2v2M15 20v2M2 15h2M2 9h2M20 15h2M20 9h2M9 2v2M9 20v2"/></symbol>
     <symbol id="i-cog" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
     <symbol id="i-tank" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="8" width="20" height="12" rx="6"/><path d="M10 8V5h4v3M7 14h10"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></symbol>
     <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
     <symbol id="i-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></symbol>
     <symbol id="i-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
@@ -58,6 +60,7 @@
     <div class="items">
       <span><svg class="ico"><use href="#i-pin"/></svg><span data-address></span></span>
       <span class="hide-sm"><svg class="ico"><use href="#i-clock"/></svg><span data-hours></span></span>
+      <a class="hide-sm" href="#" data-email-link><svg class="ico"><use href="#i-mail"/></svg><span data-email></span></a>
     </div>
     <a href="#" data-phone-link><svg class="ico"><use href="#i-phone"/></svg><b data-phone></b></a>
   </div>
@@ -340,6 +343,7 @@
       <div class="contact-list">
         <div class="card contact-item"><div class="i"><svg><use href="#i-phone"/></svg></div><div><h3>الهاتف</h3><a href="#" class="big" data-phone-link><span data-phone></span></a></div></div>
         <div class="card contact-item"><div class="i"><svg><use href="#i-pin"/></svg></div><div><h3>العنوان</h3><p data-address></p><a href="#" data-maps target="_blank" rel="noopener" style="color:var(--blue);font-weight:700">افتح في خرائط Google ←</a></div></div>
+        <div class="card contact-item"><div class="i"><svg><use href="#i-mail"/></svg></div><div><h3>البريد الإلكتروني</h3><a href="#" data-email-link style="color:var(--blue);font-weight:700;word-break:break-all"><span data-email></span></a></div></div>
         <div class="card contact-item"><div class="i"><svg><use href="#i-clock"/></svg></div><div><h3>أوقات العمل</h3><p data-hours></p></div></div>
       </div>
       <div class="map"><iframe id="mapFrame" title="موقع الورشة على الخريطة" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe></div>
@@ -383,6 +387,7 @@
         <ul>
           <li><svg class="ico"><use href="#i-phone"/></svg><a href="#" data-phone-link><span data-phone dir="ltr"></span></a></li>
           <li><svg class="ico"><use href="#i-wa"/></svg><a href="#" data-wa>واتساب</a></li>
+          <li><svg class="ico"><use href="#i-mail"/></svg><a href="#" data-email-link><span data-email></span></a></li>
           <li><svg class="ico"><use href="#i-pin"/></svg><span data-address></span></li>
         </ul>
       </div>

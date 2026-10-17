@@ -66,6 +66,8 @@
     all('[data-phone-link]', (a) => { a.href = 'tel:' + w.phone.replace(/\s/g, ''); });
     all('[data-address]', (n) => { n.textContent = w.address; });
     all('[data-city]', (n) => { n.textContent = w.city; });
+    all('[data-email]', (n) => { n.textContent = w.email; });
+    all('[data-email-link]', (a) => { a.href = 'mailto:' + w.email; });
     all('[data-hours]', (n) => { n.textContent = state.config.hoursText; });
     const q = encodeURIComponent(w.mapsQuery || w.address);
     all('[data-maps]', (a) => { a.href = 'https://www.google.com/maps/search/?api=1&query=' + q; });

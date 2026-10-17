@@ -8,7 +8,8 @@ module.exports = {
     whatsapp: '213775879228',          // رقم الواتساب بالصيغة الدولية بدون +
     city: 'تيارت',
     address: 'تيارت، بجانب سكوتيار',
-    mapsQuery: 'سكوتيار تيارت',      // ما يُبحث عنه في خرائط Google
+    mapsQuery: 'EURL Fast Gaz Tiaret', // ما يُبحث عنه في خرائط Google
+    email: 'Fastgaztiaret@gmail.com',
     facebook: '',
     instagram: '',
   },
