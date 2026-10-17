@@ -2,7 +2,7 @@
 module.exports = {
   workshop: {
     name: 'فاست غاز',
-    nameLatin: 'Fast Gaz',
+    nameLatin: 'EURL Fast Gaz',
     slogan: 'تركيب السيرغاز باحترافية وأمان',
     phone: '0775 87 92 28',          // رقم الهاتف المعروض
     whatsapp: '213775879228',          // رقم الواتساب بالصيغة الدولية بدون +
