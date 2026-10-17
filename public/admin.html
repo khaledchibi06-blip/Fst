@@ -97,7 +97,11 @@
     <div class="toolbar">
       <button class="btn btn-primary btn-sm" id="addBtn">➕ إضافة حجز (زبون اتصل بالهاتف)</button>
       <button class="btn btn-blue btn-sm" id="closedBtn">🚫 أيام العطل / إغلاق يوم</button>
+      <button class="btn btn-outline btn-sm" id="xlsxBtn" title="يحمّل الحجوزات المعروضة حسب الفلاتر الحالية">📊 تحميل Excel</button>
+      <button class="btn btn-outline btn-sm" id="csvBtn" title="ملف CSV يمكن استيراده في Notion">📥 ملف لـ Notion (CSV)</button>
+      <button class="btn btn-outline btn-sm hidden" id="notionBtn">🔄 مزامنة مع Notion</button>
     </div>
+    <div class="alert hidden" id="notionMsg" style="margin:-4px 0 14px"></div>
 
     <form class="filters" id="filters">
       <div class="field"><label>من</label><input type="date" name="from"></div>

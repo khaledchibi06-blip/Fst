@@ -54,6 +54,7 @@
       $('#loginBox').classList.add('hidden');
       $('#app').classList.remove('hidden');
       setRange('upcoming');
+      checkNotion();
     } catch (ex) {
       err.textContent = ex.message;
       err.classList.remove('hidden');
@@ -155,6 +156,42 @@
       ]));
     }
   }
+
+  // ---------- التصدير و Notion ----------
+  const exportUrl = (ext) => {
+    const params = new URLSearchParams();
+    for (const [k, v] of new FormData(filters)) if (v) params.set(k, v);
+    return `/api/admin/export.${ext}?${params}`;
+  };
+  $('#xlsxBtn').addEventListener('click', () => { window.location.href = exportUrl('xlsx'); });
+  $('#csvBtn').addEventListener('click', () => { window.location.href = exportUrl('csv'); });
+
+  const notionMsg = (text, ok) => {
+    const box = $('#notionMsg');
+    box.textContent = text;
+    box.className = 'alert ' + (ok ? 'ok' : 'err');
+  };
+  async function checkNotion() {
+    try {
+      const s = await api('/api/admin/notion');
+      $('#notionBtn').classList.toggle('hidden', !s.enabled);
+      if (s.lastError) notionMsg('آخر مزامنة مع Notion فشلت: ' + s.lastError, false);
+    } catch { /* غير مهم */ }
+  }
+  $('#notionBtn').addEventListener('click', async () => {
+    const btn = $('#notionBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳ جاري المزامنة...';
+    try {
+      const { synced } = await api('/api/admin/notion/sync', { method: 'POST' });
+      notionMsg(`تمت مزامنة ${synced} حجز مع Notion ✓`, true);
+    } catch (e) {
+      notionMsg(e.message, false);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '🔄 مزامنة مع Notion';
+    }
+  });
 
   // ---------- تنبيه عند وصول حجز جديد ----------
   function beep() {
@@ -260,6 +297,7 @@
   api('/api/admin/bookings?from=9999-01-01').then((d) => {
     today = d.today;
     $('#app').classList.remove('hidden');
+    checkNotion();
     setRange('upcoming');
   }).catch(() => {});
 

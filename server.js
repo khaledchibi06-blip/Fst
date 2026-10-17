@@ -6,6 +6,8 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const { DatabaseSync } = require('node:sqlite');
 const config = require('./config');
+const { buildXlsx } = require('./xlsx');
+const { createNotionSync } = require('./notion');
 
 const PORT = Number(process.env.PORT) || 3000;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
@@ -43,6 +45,13 @@ db.exec(`
     reason TEXT
   );
 `);
+
+// ترقية قاعدة بيانات قديمة: عمود ربط الحجز بصفحة Notion
+if (!db.prepare('PRAGMA table_info(bookings)').all().some((c) => c.name === 'notion_page_id')) {
+  db.exec('ALTER TABLE bookings ADD COLUMN notion_page_id TEXT');
+}
+
+const notion = createNotionSync({ db, config });
 
 const ACTIVE_STATUSES = ['pending', 'confirmed'];
 const ALL_STATUSES = ['pending', 'confirmed', 'done', 'cancelled'];
@@ -254,17 +263,38 @@ function createBooking(data, { force = false, status = 'pending' } = {}) {
       }
     }
     const ref = genRef();
-    db.prepare(`
+    const ins = db.prepare(`
       INSERT INTO bookings (ref, name, phone, car_brand, car_model, car_year, fuel_system, service, date, time, notes, status)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(ref, data.name, data.phone, data.car_brand, data.car_model, data.car_year,
       data.fuel_system, data.service, data.date, data.time, data.notes, status);
     db.exec('COMMIT');
+    notion.sync(Number(ins.lastInsertRowid));
     return { ref };
   } catch (e) {
     db.exec('ROLLBACK');
     throw e;
   }
+}
+
+function queryBookings(params, limit) {
+  const where = [];
+  const args = [];
+  const from = params.get('from');
+  const to = params.get('to');
+  const status = params.get('status');
+  const q = params.get('q');
+  if (from && isValidDate(from)) { where.push('date >= ?'); args.push(from); }
+  if (to && isValidDate(to)) { where.push('date <= ?'); args.push(to); }
+  if (status && ALL_STATUSES.includes(status)) { where.push('status = ?'); args.push(status); }
+  if (q) {
+    where.push('(name LIKE ? OR phone LIKE ? OR ref LIKE ? OR car_brand LIKE ? OR car_model LIKE ?)');
+    const like = '%' + q.slice(0, 40) + '%';
+    args.push(like, like, like, like, like);
+  }
+  const sql = `SELECT * FROM bookings ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
+               ORDER BY date ASC, time ASC, id ASC LIMIT ${Number(limit)}`;
+  return db.prepare(sql).all(...args);
 }
 
 function publicBooking(row) {
@@ -327,6 +357,7 @@ async function handleApi(req, res, url) {
     if (!row) return send(res, 404, { error: 'لم يتم العثور على حجز بهذه المعلومات' });
     if (!ACTIVE_STATUSES.includes(row.status)) return send(res, 400, { error: 'لا يمكن إلغاء هذا الحجز' });
     db.prepare(`UPDATE bookings SET status = 'cancelled' WHERE id = ?`).run(row.id);
+    notion.sync(row.id);
     return send(res, 200, { booking: publicBooking({ ...row, status: 'cancelled' }) });
   }
 
@@ -348,24 +379,49 @@ async function handleApi(req, res, url) {
   if (p.startsWith('/api/admin/')) {
     if (!isAdmin(req)) return send(res, 401, { error: 'غير مصرح' });
 
-    if (req.method === 'GET' && p === '/api/admin/bookings') {
-      const where = [];
-      const args = [];
-      const from = url.searchParams.get('from');
-      const to = url.searchParams.get('to');
-      const status = url.searchParams.get('status');
-      const q = url.searchParams.get('q');
-      if (from && isValidDate(from)) { where.push('date >= ?'); args.push(from); }
-      if (to && isValidDate(to)) { where.push('date <= ?'); args.push(to); }
-      if (status && ALL_STATUSES.includes(status)) { where.push('status = ?'); args.push(status); }
-      if (q) {
-        where.push('(name LIKE ? OR phone LIKE ? OR ref LIKE ? OR car_brand LIKE ? OR car_model LIKE ?)');
-        const like = '%' + q.slice(0, 40) + '%';
-        args.push(like, like, like, like, like);
+    if (req.method === 'GET' && (p === '/api/admin/export.xlsx' || p === '/api/admin/export.csv')) {
+      const rows = queryBookings(url.searchParams, 100000);
+      const headers = ['رقم الحجز', 'التاريخ', 'الوقت', 'الاسم', 'الهاتف', 'نوع السيارة', 'الطراز', 'سنة الصنع',
+        'نظام المحرك', 'الخدمة', 'الحالة', 'ملاحظات', 'تاريخ التسجيل'];
+      const FUEL = { injection: 'حقن', carburetor: 'كاربيراتور' };
+      const STATUS_AR = { pending: 'في انتظار التأكيد', confirmed: 'مؤكد', done: 'منجز', cancelled: 'ملغى' };
+      const data = rows.map((r) => [
+        r.ref, r.date, r.time, r.name, r.phone, r.car_brand, r.car_model, r.car_year,
+        FUEL[r.fuel_system] || '', (config.services.find((s) => s.id === r.service) || {}).title || r.service,
+        STATUS_AR[r.status] || r.status, r.notes || '', r.created_at,
+      ]);
+      const stamp = todayInTz();
+      if (p.endsWith('.xlsx')) {
+        const buf = buildXlsx({ sheetName: 'الحجوزات', headers, rows: data, widths: [13, 12, 8, 22, 14, 14, 14, 10, 12, 34, 18, 34, 20] });
+        res.writeHead(200, {
+          'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          'Content-Disposition': `attachment; filename="fastgaz-bookings-${stamp}.xlsx"`,
+        });
+        return res.end(buf);
       }
-      const sql = `SELECT * FROM bookings ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
-                   ORDER BY date ASC, time ASC, id ASC LIMIT 500`;
-      const rows = db.prepare(sql).all(...args);
+      const csvCell = (v) => {
+        const t = v === null || v === undefined ? '' : String(v);
+        return /[",\n\r]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t;
+      };
+      const csv = [headers, ...data].map((r) => r.map(csvCell).join(',')).join('\r\n');
+      res.writeHead(200, {
+        'Content-Type': 'text/csv; charset=utf-8',
+        'Content-Disposition': `attachment; filename="fastgaz-bookings-${stamp}.csv"`,
+      });
+      return res.end('\uFEFF' + csv);
+    }
+
+    if (req.method === 'GET' && p === '/api/admin/notion') return send(res, 200, notion.status());
+    if (req.method === 'POST' && p === '/api/admin/notion/sync') {
+      try {
+        return send(res, 200, { synced: await notion.syncAll() });
+      } catch (e) {
+        return send(res, 502, { error: 'فشلت المزامنة مع Notion: ' + e.message });
+      }
+    }
+
+    if (req.method === 'GET' && p === '/api/admin/bookings') {
+      const rows = queryBookings(url.searchParams, 500);
       const today = todayInTz();
       const stats = db.prepare(`
         SELECT
@@ -385,6 +441,7 @@ async function handleApi(req, res, url) {
       if (!ALL_STATUSES.includes(body.status)) return send(res, 400, { error: 'حالة غير صحيحة' });
       const r = db.prepare('UPDATE bookings SET status = ? WHERE id = ?').run(body.status, Number(m[1]));
       if (!r.changes) return send(res, 404, { error: 'الحجز غير موجود' });
+      notion.sync(Number(m[1]));
       return send(res, 200, { ok: true });
     }
     if (req.method === 'POST' && p === '/api/admin/bookings') {
@@ -418,8 +475,10 @@ async function handleApi(req, res, url) {
     }
 
     if (m && req.method === 'DELETE') {
-      const r = db.prepare('DELETE FROM bookings WHERE id = ?').run(Number(m[1]));
-      if (!r.changes) return send(res, 404, { error: 'الحجز غير موجود' });
+      const row = db.prepare('SELECT notion_page_id FROM bookings WHERE id = ?').get(Number(m[1]));
+      if (!row) return send(res, 404, { error: 'الحجز غير موجود' });
+      db.prepare('DELETE FROM bookings WHERE id = ?').run(Number(m[1]));
+      notion.archive(row.notion_page_id);
       return send(res, 200, { ok: true });
     }
   }
