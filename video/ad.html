@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>Fast Gaz Ad</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1080px; height: 1920px; overflow: hidden; background: #071a3d; }
+  body { font-family: 'Cairo', 'DejaVu Sans', sans-serif; color: #fff; -webkit-font-smoothing: antialiased; }
+  .stage { position: relative; width: 1080px; height: 1920px; overflow: hidden;
+    background: radial-gradient(900px 700px at 90% 0%, rgba(34,195,230,.35), transparent 60%),
+                radial-gradient(800px 700px at 0% 100%, rgba(255,122,26,.28), transparent 60%),
+                linear-gradient(160deg, #071a3d, #0c2a5e); }
+  .grid { position: absolute; inset: -100px; opacity: .25;
+    background-image: linear-gradient(rgba(255,255,255,.07) 2px, transparent 2px), linear-gradient(90deg, rgba(255,255,255,.07) 2px, transparent 2px);
+    background-size: 90px 90px; animation: drift 22s linear both; }
+  @keyframes drift { to { transform: translate(90px, 180px); } }
+  .orb { position: absolute; border-radius: 50%; filter: blur(60px); opacity: .5; }
+  .orb.a { width: 420px; height: 420px; background: #ff7a1a; top: 1200px; left: -120px; animation: float1 22s ease-in-out both; }
+  .orb.b { width: 380px; height: 380px; background: #22c3e6; top: 200px; left: 760px; animation: float2 22s ease-in-out both; }
+  @keyframes float1 { 50% { transform: translate(220px, -300px); } }
+  @keyframes float2 { 50% { transform: translate(-260px, 260px); } }
+
+  .scene { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 160px 90px 380px; text-align: center; opacity: 0; }
+
+  .brandbar { position: absolute; top: 90px; left: 0; right: 0; display: flex; justify-content: center; align-items: center; gap: 18px; z-index: 5; }
+  .brandbar img { width: 74px; height: 74px; }
+  .brandbar b { font-size: 46px; font-weight: 900; }
+  .brandbar small { display: block; font-size: 20px; letter-spacing: 6px; color: #ff9f43; font-weight: 800; line-height: 1; }
+
+  h1 { font-size: 104px; line-height: 1.25; font-weight: 900; }
+  h2 { font-size: 78px; line-height: 1.3; font-weight: 900; }
+  .accent { color: #ff8a2b; }
+  .green { color: #3ee08f; }
+  p.sub { font-size: 46px; color: #c6d3ec; margin-top: 26px; font-weight: 700; }
+
+  /* entrances */
+  .up { animation: up .7s cubic-bezier(.2,.9,.3,1.2) both; }
+  @keyframes up { from { opacity: 0; transform: translateY(80px) scale(.96); } to { opacity: 1; transform: none; } }
+  .pop { animation: pop .6s cubic-bezier(.2,1.4,.4,1) both; }
+  @keyframes pop { from { opacity: 0; transform: scale(.4); } to { opacity: 1; transform: none; } }
+  .slide { animation: slide .6s cubic-bezier(.2,.9,.3,1.1) both; }
+  @keyframes slide { from { opacity: 0; transform: translateX(-140px); } to { opacity: 1; transform: none; } }
+  .shake { animation: shake .5s ease both; }
+  @keyframes shake { 0%,100% { transform: none; } 20% { transform: rotate(-4deg); } 40% { transform: rotate(4deg); } 60% { transform: rotate(-3deg); } 80% { transform: rotate(2deg); } }
+
+  /* scene 1: gauge */
+  .gauge { width: 560px; height: 340px; margin-bottom: 60px; }
+  .needle { transform-origin: 280px 300px; animation: needle 2.2s cubic-bezier(.5,0,.3,1) both; animation-delay: .3s; }
+  @keyframes needle { from { transform: rotate(78deg); } to { transform: rotate(-74deg); } }
+  .warn { animation: blink .5s steps(2) both; animation-iteration-count: 4; animation-delay: 1.6s; }
+  @keyframes blink { 0% { opacity: 0; } 50% { opacity: 1; } 100% { opacity: 0; } }
+
+  /* scene 2: bars */
+  .compare { width: 100%; margin-top: 70px; display: grid; gap: 40px; }
+  .bar-row { text-align: right; }
+  .bar-row .lbl { display: flex; justify-content: space-between; font-size: 42px; font-weight: 800; margin-bottom: 14px; }
+  .bar-row .lbl span:last-child { direction: ltr; }
+  .bar { height: 74px; border-radius: 20px; background: rgba(255,255,255,.1); overflow: hidden; }
+  .bar i { display: block; height: 100%; border-radius: 20px; transform-origin: right; animation: grow 1.1s cubic-bezier(.3,.8,.3,1) both; }
+  @keyframes grow { from { transform: scaleX(0); } }
+  .bar.petrol i { width: 100%; background: linear-gradient(90deg, #ff4d4d, #ff7a5a); }
+  .bar.lpg i { width: 23%; background: linear-gradient(90deg, #3ee08f, #22c3e6); }
+  .save-badge { margin-top: 56px; display: inline-block; background: #fff; color: #0a2550; border-radius: 30px; padding: 26px 48px; font-size: 50px; font-weight: 900; }
+  .save-badge b { color: #12925a; direction: ltr; unicode-bidi: isolate; }
+  .note { font-size: 28px; color: #9fb2d6; margin-top: 18px; }
+
+  /* scene 3: services */
+  .cards { width: 100%; display: grid; gap: 30px; margin-top: 60px; }
+  .card { display: flex; align-items: center; gap: 30px; background: #fff; color: #0a2550; border-radius: 34px; padding: 34px 40px; text-align: right;
+    box-shadow: 0 30px 60px rgba(0,0,0,.25); }
+  .card .ic { width: 110px; height: 110px; flex: none; border-radius: 30px; display: grid; place-items: center; background: linear-gradient(135deg, #1557c0, #22c3e6); color: #fff; }
+  .card .ic svg { width: 58px; height: 58px; }
+  .card b { font-size: 46px; font-weight: 900; line-height: 1.35; }
+
+  /* scene 4: checks */
+  .checks { display: grid; gap: 34px; margin-top: 70px; width: 100%; }
+  .check { display: flex; align-items: center; gap: 30px; font-size: 48px; font-weight: 800; text-align: right; }
+  .check i { width: 96px; height: 96px; flex: none; border-radius: 50%; background: #3ee08f; color: #071a3d; display: grid; place-items: center; box-shadow: 0 0 0 14px rgba(62,224,143,.18); }
+  .check i svg { width: 54px; height: 54px; }
+
+  /* scene 5: phone */
+  .phone { width: 560px; height: 900px; border-radius: 70px; background: #0b1530; border: 14px solid #1d2a4a; margin-top: 50px; position: relative; overflow: hidden;
+    box-shadow: 0 50px 100px rgba(0,0,0,.45); }
+  .screen { position: absolute; inset: 0; background: #f5f7fb; color: #0a2550; padding: 70px 34px 30px; text-align: right; }
+  .screen .t { font-size: 36px; font-weight: 900; margin-bottom: 24px; }
+  .days { display: flex; gap: 12px; margin-bottom: 26px; }
+  .days div { flex: 1; background: #fff; border: 3px solid #e3e8f1; border-radius: 20px; padding: 12px 0; text-align: center; font-size: 22px; color: #5b6880; }
+  .days div b { display: block; font-size: 40px; color: #0a2550; }
+  .days div.on { background: #1557c0; border-color: #1557c0; color: #d6e4fb; animation: dayOn .3s both; animation-delay: 15.1s; }
+  .days div.on b { color: #fff; }
+  @keyframes dayOn { from { background: #fff; border-color: #e3e8f1; } }
+  .times { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .times div { background: #fff; border: 3px solid #e3e8f1; border-radius: 20px; padding: 20px 0; text-align: center; font-size: 36px; font-weight: 900; }
+  .times div.on { animation: timeOn .3s both; animation-delay: 15.85s; }
+  @keyframes timeOn { to { background: #ff7a1a; border-color: #ff7a1a; color: #fff; } }
+  .bookbtn { margin-top: 30px; background: linear-gradient(135deg, #ff7a1a, #ff9f43); color: #fff; border-radius: 22px; padding: 24px; text-align: center; font-size: 38px; font-weight: 900; }
+  .tap { position: absolute; width: 90px; height: 90px; border-radius: 50%; background: rgba(255,122,26,.35); border: 5px solid #ff7a1a; opacity: 0;
+    animation: tap 2.3s ease both; animation-delay: 14.7s; }
+  @keyframes tap {
+    0% { opacity: 0; top: 300px; left: 330px; transform: scale(1); }
+    10% { opacity: 1; top: 141px; left: 281px; }
+    18% { transform: scale(.7); } 26% { transform: scale(1); top: 141px; left: 281px; }
+    42% { top: 326px; left: 341px; transform: scale(1); }
+    50% { transform: scale(.7); } 58% { transform: scale(1); top: 326px; left: 341px; }
+    78% { top: 546px; left: 221px; transform: scale(1); }
+    86% { transform: scale(.7); } 94% { transform: scale(1); opacity: 1; top: 546px; left: 221px; }
+    100% { opacity: 0; top: 546px; left: 221px; }
+  }
+  .done { position: absolute; inset: 0; background: rgba(7,26,61,.92); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px;
+    animation: fadeIn .4s both; animation-delay: 16.9s; }
+  @keyframes fadeIn { from { opacity: 0; } }
+  .done i { width: 170px; height: 170px; border-radius: 50%; background: #3ee08f; display: grid; place-items: center; color: #071a3d; animation: pop .6s cubic-bezier(.2,1.4,.4,1) both; animation-delay: 17.0s; }
+  .done i svg { width: 96px; height: 96px; }
+  .done b { font-size: 50px; color: #fff; }
+
+  /* scene 6: end card */
+  .logo-big { width: 230px; height: 230px; filter: drop-shadow(0 30px 50px rgba(34,195,230,.4)); }
+  .name { font-size: 120px; font-weight: 900; margin-top: 26px; line-height: 1.2; }
+  .eurl { font-size: 40px; letter-spacing: 12px; color: #ff9f43; font-weight: 900; direction: ltr; }
+  .tagline { font-size: 46px; color: #c6d3ec; margin-top: 24px; font-weight: 700; }
+  .pill { margin-top: 60px; display: inline-flex; align-items: center; gap: 22px; background: linear-gradient(135deg, #ff7a1a, #ff9f43); border-radius: 999px; padding: 30px 64px;
+    font-size: 70px; font-weight: 900; box-shadow: 0 24px 60px rgba(255,122,26,.45); }
+  .pill span { direction: ltr; unicode-bidi: isolate; }
+  .pill svg { width: 64px; height: 64px; }
+  .pulse { animation: pop .6s cubic-bezier(.2,1.4,.4,1) both, pulse 1.2s ease-in-out 3 both; }
+  @keyframes pulse { 50% { transform: scale(1.06); } }
+  .info { margin-top: 44px; display: grid; gap: 22px; font-size: 42px; font-weight: 700; }
+  .info div { display: flex; align-items: center; justify-content: center; gap: 16px; }
+  .info svg { width: 46px; height: 46px; color: #ff9f43; }
+  .info .ltr { direction: ltr; unicode-bidi: isolate; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></symbol>
+    <symbol id="i-tiktok" viewBox="0 0 24 24" fill="currentColor"><path d="M16.6 5.8A4.3 4.3 0 0 1 15.5 3h-3.1v12.4a2.6 2.6 0 1 1-2.6-2.6c.3 0 .5 0 .8.1V9.7a5.8 5.8 0 1 0 4.9 5.7V9.1a7.4 7.4 0 0 0 4.3 1.4V7.4a4.3 4.3 0 0 1-3.2-1.6z"/></symbol>
+    <symbol id="i-wa" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.3-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6a2.7 2.7 0 0 0 1.8-1.2 2.2 2.2 0 0 0 .1-1.3c0-.1-.2-.2-.5-.3z"/></symbol>
+    <symbol id="i-cpu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M15 2v2M15 20v2M2 15h2M2 9h2M20 15h2M20 9h2M9 2v2M9 20v2"/></symbol>
+    <symbol id="i-cog" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+    <symbol id="i-wrench" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9l-3.8 3.8z"/></symbol>
+    <symbol id="i-tank" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="8" width="20" height="12" rx="6"/><path d="M10 8V5h4v3M7 14h10"/></symbol>
+  </defs>
+</svg>
+
+<div class="stage">
+  <div class="grid"></div>
+  <div class="orb a"></div>
+  <div class="orb b"></div>
+
+  <div class="brandbar" id="brandbar">
+    <img src="../public/logo.svg" alt="">
+    <div><b>فاست غاز</b><small>EURL FAST GAZ</small></div>
+  </div>
+
+  <!-- 1: الهوك -->
+  <div class="scene" data-start="0" data-end="3.3">
+    <svg class="gauge up" viewBox="0 0 560 340" style="animation-delay:.1s">
+      <path d="M60 300 A220 220 0 0 1 500 300" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="34" stroke-linecap="round"/>
+      <path d="M60 300 A220 220 0 0 1 150 120" fill="none" stroke="#ff4d4d" stroke-width="34" stroke-linecap="round"/>
+      <text x="40" y="335" font-size="44" font-weight="900" fill="#ff4d4d" font-family="DejaVu Sans">E</text>
+      <text x="492" y="335" font-size="44" font-weight="900" fill="#3ee08f" font-family="DejaVu Sans">F</text>
+      <g class="needle"><rect x="272" y="96" width="16" height="210" rx="8" fill="#fff"/></g>
+      <circle cx="280" cy="300" r="30" fill="#ff7a1a"/>
+      <g class="warn"><circle cx="280" cy="180" r="42" fill="#ff4d4d"/><text x="280" y="200" text-anchor="middle" font-size="60" font-weight="900" fill="#fff" font-family="DejaVu Sans">!</text></g>
+    </svg>
+    <h1 class="up" style="animation-delay:.5s">مازال تخلّص<br><span class="accent">بزاف</span> في البنزين؟</h1>
+    <p class="sub up" style="animation-delay:1.2s">الخزان يفرغ بسرعة والمصروف يكبر…</p>
+  </div>
+
+  <!-- 2: الحل والتوفير -->
+  <div class="scene" data-start="3.3" data-end="7.4">
+    <h2 class="up" style="animation-delay:3.4s">الحل هو</h2>
+    <h1 class="pop" style="animation-delay:3.7s"><span class="accent">السيرغاز</span></h1>
+    <div class="compare">
+      <div class="bar-row up" style="animation-delay:4.3s">
+        <div class="lbl"><span>بالبنزين</span><span id="cPetrol">0 DA</span></div>
+        <div class="bar petrol"><i style="animation-delay:4.4s"></i></div>
+      </div>
+      <div class="bar-row up" style="animation-delay:4.8s">
+        <div class="lbl"><span>بالسيرغاز</span><span id="cLpg">0 DA</span></div>
+        <div class="bar lpg"><i style="animation-delay:4.9s"></i></div>
+      </div>
+    </div>
+    <div class="save-badge pop" style="animation-delay:5.8s">وفّر حتى <b>70%</b></div>
+    <p class="note up" style="animation-delay:6s">مثال: 2000 كم في الشهر — تقريبي</p>
+  </div>
+
+  <!-- 3: الخدمات -->
+  <div class="scene" data-start="7.4" data-end="11.2">
+    <h2 class="up" style="animation-delay:7.5s">خدماتنا</h2>
+    <div class="cards">
+      <div class="card slide" style="animation-delay:7.9s"><div class="ic"><svg><use href="#i-cpu"/></svg></div><b>تركيب سيرغاز<br>للسيارات بالحقن</b></div>
+      <div class="card slide" style="animation-delay:8.3s"><div class="ic"><svg><use href="#i-cog"/></svg></div><b>تركيب للسيارات<br>بالكاربيراتور</b></div>
+      <div class="card slide" style="animation-delay:8.7s"><div class="ic"><svg><use href="#i-wrench"/></svg></div><b>صيانة وضبط<br>نظام السيرغاز</b></div>
+      <div class="card slide" style="animation-delay:9.1s"><div class="ic"><svg><use href="#i-tank"/></svg></div><b>فحص وتبديل الخزان</b></div>
+    </div>
+  </div>
+
+  <!-- 4: لماذا نحن -->
+  <div class="scene" data-start="11.2" data-end="14.6">
+    <h2 class="up" style="animation-delay:11.3s">علاش <span class="accent">فاست غاز</span>؟</h2>
+    <div class="checks">
+      <div class="check slide" style="animation-delay:11.7s"><i><svg><use href="#i-check"/></svg></i>معدات معتمدة ومضمونة</div>
+      <div class="check slide" style="animation-delay:12.1s"><i><svg><use href="#i-check"/></svg></i>ضمان على التركيب</div>
+      <div class="check slide" style="animation-delay:12.5s"><i><svg><use href="#i-check"/></svg></i>فحص التسربات قبل التسليم</div>
+      <div class="check slide" style="animation-delay:12.9s"><i><svg><use href="#i-check"/></svg></i>تستلم سيارتك في نفس اليوم</div>
+    </div>
+  </div>
+
+  <!-- 5: الحجز أونلاين -->
+  <div class="scene" data-start="14.6" data-end="18.3" style="padding-top:220px">
+    <h2 class="up" style="animation-delay:14.6s">احجز موعدك <span class="accent">من تيليفونك</span></h2>
+    <div class="phone up" style="animation-delay:14.8s">
+      <div class="screen">
+        <div class="t">اختر اليوم</div>
+        <div class="days">
+          <div>اليوم<b>19</b></div><div class="on">غداً<b>20</b></div><div>الأربعاء<b>21</b></div><div>الخميس<b>22</b></div>
+        </div>
+        <div class="t">اختر الوقت</div>
+        <div class="times"><div class="on">08:00</div><div>10:00</div><div>13:00</div><div>15:00</div></div>
+        <div class="bookbtn">تأكيد الحجز</div>
+      </div>
+      <div class="tap"></div>
+      <div class="done"><i><svg><use href="#i-check"/></svg></i><b>تم الحجز!</b></div>
+    </div>
+  </div>
+
+  <!-- 6: الخاتمة -->
+  <div class="scene" data-start="18.3" data-end="99" id="endScene">
+    <img class="logo-big pop" src="../public/logo.svg" alt="" style="animation-delay:18.4s">
+    <div class="name up" style="animation-delay:18.7s">فاست غاز</div>
+    <div class="eurl up" style="animation-delay:18.9s">EURL FAST GAZ</div>
+    <div class="tagline up" style="animation-delay:19.1s">تركيب وصيانة السيرغاز</div>
+    <div class="pill pulse" style="animation-delay:19.5s, 20.1s"><svg><use href="#i-phone"/></svg><span>0775 87 92 28</span></div>
+    <div class="info">
+      <div class="up" style="animation-delay:19.9s"><svg><use href="#i-pin"/></svg>تيارت — بجانب سكوتيار</div>
+      <div class="up" style="animation-delay:20.2s"><svg><use href="#i-tiktok"/></svg><span class="ltr">@eurlfastgaz</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // يحدد شكل الفيديو عند اللحظة t (بالثواني) — يُستعمل لتصوير كل إطار
+  const ease = (x) => 1 - Math.pow(1 - Math.min(1, Math.max(0, x)), 3);
+  const fmt = (n) => Math.round(n).toLocaleString('en-US') + ' DA';
+  window.seek = (t) => {
+    for (const a of document.getAnimations()) { a.pause(); a.currentTime = t * 1000; }
+    for (const s of document.querySelectorAll('.scene')) {
+      const st = +s.dataset.start, en = +s.dataset.end, f = 0.35;
+      let o = 0;
+      if (t >= st && t < en) o = Math.min(1, (t - st) / f, (en - t) / f);
+      s.style.opacity = o;
+      s.style.transform = t < en - f ? 'none' : `scale(${1 + (t - (en - f)) * 0.25})`;
+    }
+    // الشعار العلوي يختفي في الخاتمة
+    document.getElementById('brandbar').style.opacity = t < 18.1 ? 1 : Math.max(0, 1 - (t - 18.1) / 0.3);
+    // عدّاد التكلفة
+    document.getElementById('cPetrol').textContent = fmt(6580 * ease((t - 4.4) / 1.1));
+    document.getElementById('cLpg').textContent = fmt(1512 * ease((t - 4.9) / 1.1));
+  };
+  window.seek(0);
+</script>
+</body>
+</html>

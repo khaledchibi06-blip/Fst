@@ -91,3 +91,14 @@ docker run -d -p 3000:3000 -e ADMIN_PASSWORD=كلمة_سر_قوية -v fastgaz-d
 الأعمدة (رقم الحجز، الهاتف، السيارة، الخدمة، الموعد، الحالة، ملاحظات) تُنشأ تلقائياً.
 
 بدون ربط: زر **📥 ملف لـ Notion (CSV)** يحمّل ملفاً يمكن استيراده في Notion من **Import ← CSV**.
+
+## الفيديو الإعلاني
+
+الفيديو الجاهز: `video/fastgaz-ad.mp4` (22 ثانية، عمودي 1080×1920 لـ TikTok / Reels / حالة واتساب).
+
+لإعادة توليده بعد تعديل `video/ad.html` (يحتاج Python + numpy و ffmpeg و Playwright):
+
+```bash
+python3 video/music.py music.wav 22
+node video/render.js music.wav video/fastgaz-ad.mp4
+```
