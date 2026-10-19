@@ -102,3 +102,13 @@ docker run -d -p 3000:3000 -e ADMIN_PASSWORD=كلمة_سر_قوية -v fastgaz-d
 python3 video/music.py music.wav 22
 node video/render.js music.wav video/fastgaz-ad.mp4
 ```
+
+### فيديو الورشة (بصور حقيقية)
+
+`video/fastgaz-reel.mp4` (40 ثانية): لقطات الورشة + صور تركيب الرونو + شرح الحجز من الموقع + معلومات الاتصال.
+نص التعليق الصوتي بالدارجة: `video/voiceover-darija.md`.
+
+```bash
+python3 video/music.py music.wav 40 "9.05,12.55,23.05,35.05" "34.0,35.6"
+node video/render-reel.js base.mp4 music.wav video/fastgaz-reel.mp4
+```

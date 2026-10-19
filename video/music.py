@@ -4,6 +4,10 @@ import numpy as np
 
 SR = 44100
 DUR = float(sys.argv[2]) if len(sys.argv) > 2 else 22.0
+# أوقات مؤثرات الانتقال (ووش) والرنين، مفصولة بفواصل — اختيارية
+cues = lambda i, d: [float(x) for x in sys.argv[i].split(',') if x] if len(sys.argv) > i else d
+WHOOSH = cues(3, [3.15, 7.25, 11.05, 14.45, 18.15])
+DINGS = cues(4, [16.95, 17.1, 19.5])
 BPM = 120
 beat = 60 / BPM
 n = int(SR * DUR)
@@ -69,14 +73,15 @@ def whoosh():
     L = 0.5; k = int(L * SR); s = rng.standard_normal(k)
     s = np.convolve(s, np.ones(30) / 30, mode='same')
     return s * np.sin(np.linspace(0, np.pi, k)) ** 2 * 0.35
-for ts in [3.15, 7.25, 11.05, 14.45, 18.15]:
+for ts in WHOOSH:
     add(whoosh(), ts)
 
 # صوت "دينغ" عند تأكيد الحجز وظهور رقم الهاتف
 def ding(f=1318.5):
     L = 0.9; tt = np.arange(int(L * SR)) / SR
     return (np.sin(2 * np.pi * f * tt) + 0.4 * np.sin(2 * np.pi * f * 2 * tt)) * np.exp(-tt * 5) * 0.18
-add(ding(), 16.95); add(ding(1568.0), 17.1); add(ding(1046.5), 19.5)
+for k, ts in enumerate(DINGS):
+    add(ding([1318.5, 1568.0, 1046.5][k % 3]), ts)
 
 # تلاشي في البداية والنهاية
 fade = int(0.3 * SR); out[:fade] *= np.linspace(0, 1, fade)
